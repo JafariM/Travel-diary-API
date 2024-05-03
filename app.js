@@ -38,6 +38,9 @@ app.use(cors());
 app.use(xss());
 
 // routes
+app.use("/", (req, res) => {
+  res.send("<h1>This is the Travel Diary API</h1>");
+});
 app.use("/api/v1/auth", authRouter);
 //with authenticatedUser middleware we protect  all travel routes to be accessed
 //only by authenticated users
