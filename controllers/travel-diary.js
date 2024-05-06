@@ -3,11 +3,24 @@ const { StatusCodes } = require("http-status-codes");
 const { BadRequestError, NotFoundError } = require("../errors");
 
 const getAllTravels = async (req, res) => {
-  res.send("All travels");
+  const travels = await Travel.find({ createdBy: req.user.userId });
+  res.status(StatusCodes.OK).json({ travels, count: travels.length });
 };
 
 const getTravel = async (req, res) => {
-  res.send("get travel");
+  const {
+    user: { userId },
+    params: { id: travelId },
+  } = req;
+  const travel = await Travel.findOne({
+    _id: travelId,
+    createdBy: userId,
+  });
+
+  if (!travel) {
+    throw new NotFoundError(`No travel with id ${travelId}`);
+  }
+  res.status(StatusCodes.OK).json({ travel });
 };
 
 const createTravel = async (req, res) => {
@@ -17,11 +30,44 @@ const createTravel = async (req, res) => {
 };
 
 const updateTravel = async (req, res) => {
-  res.send("Update one travel");
+  const {
+    body: { placeName, location },
+    user: { userId },
+    params: { id: travelId },
+  } = req;
+
+  if (placeName === "" || location === "") {
+    throw new BadRequestError("place name of location can not be empty");
+  }
+
+  const travel = await Travel.findOneAndUpdate(
+    {
+      _id: travelId,
+      createdBy: userId,
+    },
+    req.body,
+    { new: true, runValidators: true }
+  );
+  if (!travel) {
+    throw new NotFoundError(`No travel with id ${travelId}`);
+  }
+  res.status(StatusCodes.OK).json({ travel });
 };
 
 const deleteTravel = async (req, res) => {
-  res.send("Delete one travel");
+  const {
+    user: { userId },
+    params: { id: travelId },
+  } = req;
+  const travel = await Travel.findOneAndDelete({
+    _id: travelId,
+    createdBy: userId,
+  });
+
+  if (!travel) {
+    throw new NotFoundError(`No travel with id ${travelId}`);
+  }
+  res.status(StatusCodes.OK).send();
 };
 
 module.exports = {

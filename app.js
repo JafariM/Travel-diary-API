@@ -3,6 +3,12 @@ require("express-async-errors");
 const express = require("express");
 const app = express();
 
+// extra security packages
+const helmet = require("helmet");
+const cors = require("cors");
+const xss = require("xss-clean");
+const rateLimiter = require("express-rate-limit");
+
 //authentication middleware
 const authenticatedUser = require("./middleware/authentication");
 
@@ -18,9 +24,23 @@ const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 
 app.use(express.json());
-// extra packages
+// extra packages for security
+app.set("trust proxy", 1);
+app.use(
+  rateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+  })
+);
+app.use(express.json());
+app.use(helmet());
+app.use(cors());
+app.use(xss());
 
 // routes
+app.use("/", (req, res) => {
+  res.send("<h1>This is the Travel Diary API</h1>");
+});
 app.use("/api/v1/auth", authRouter);
 //with authenticatedUser middleware we protect  all travel routes to be accessed
 //only by authenticated users
